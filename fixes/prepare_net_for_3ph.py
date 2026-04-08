@@ -153,7 +153,7 @@ def set_ext_grid_from_dss_source(net, circuit_path: Path):
     basekv = get_param(txt, "basekv")
 
     if None in (r1, x1, r0, x0, basekv):
-        raise ValueError("Could not parse source sequence data from 01_Circuit.dss")
+        raise ValueError("rom 01_Circuit.dss")
 
     r1 = float(r1)
     x1 = float(x1)
