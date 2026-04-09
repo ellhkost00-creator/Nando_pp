@@ -16,7 +16,7 @@ PP_TRAFO_CSV = str(config.RESULTS_RES_TRAFO / "loading_percent.csv")
 DSS_XLSX     = str(config.DSS_TRAFO_LOADING_XLSX)
 DSS_SHEET    = config.DSS_TRAFO_LOADING_SHEET
 
-OUT_XLSX   = str(config.METRICS_DIR / "trafo_loading_compare.xlsx")
+OUT_XLSX   = str(config.METRICS_OUT_DIR / "trafo_loading_compare.xlsx")
 DEBUG_XLSX = str(config.RESULTS_DIR  / "trafo_loading_debug.xlsx")
 
 SEP = ";"

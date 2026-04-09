@@ -1,16 +1,21 @@
+import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from pathlib import Path
 from pandapower import from_excel
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
 
 # =========================
 # SETTINGS
 # =========================
-NET_XLSX =  r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx"
-PP_VM_CSV = r"C:\Users\anton\Desktop\nando_pp\results\res_bus\vm_pu.csv"
+NET_XLSX  = str(config.NET_PP_XLSX)
+PP_VM_CSV = str(config.RESULTS_RES_BUS / "vm_pu.csv")
 
-DSS_XLSX = r"C:\Users\anton\Desktop\nando_pp\excels\vm_pu_1ph_equivalent.xlsx"
-DSS_SHEET = "vm_pu"
+DSS_XLSX  = str(config.DSS_VM_PU_XLSX)
+DSS_SHEET = config.DSS_VM_PU_SHEET
 
 BUS_NAME = "mv_f0_lv273_f0_c0"   # bus name from net.bus["name"]
 

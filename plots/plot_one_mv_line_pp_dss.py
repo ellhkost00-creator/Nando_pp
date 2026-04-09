@@ -1,19 +1,24 @@
+import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from pathlib import Path
 from pandapower import from_excel
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
 
 # =========================
 # SETTINGS
 # =========================
-NET_XLSX = r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx"
+NET_XLSX = str(config.NET_PP_XLSX)
 
 # Pandapower line results (from pp timeseries export)
-PP_LINE_CSV = r"C:\Users\anton\Desktop\nando_pp\results\res_line\loading_percent.csv"
+PP_LINE_CSV = str(config.RESULTS_RES_LINE / "loading_percent.csv")
 
-# OpenDSS line results (the xlsx you created earlier from run_daily/Idata)
-DSS_XLSX = r"C:\Users\anton\Desktop\nando_pp\excels\mv_line_loading.xlsx"
-DSS_SHEET = "loading_pct"
+# OpenDSS line results
+DSS_XLSX  = str(config.DSS_MV_LINE_LOADING_XLSX)
+DSS_SHEET = config.DSS_MV_LINE_LOADING_SHEET
 
 # Line name from net.line["name"]
 LINE_NAME = "mv_f0_l479"   # <-- ΒΑΛΕ ΕΔΩ τη γραμμή που θες

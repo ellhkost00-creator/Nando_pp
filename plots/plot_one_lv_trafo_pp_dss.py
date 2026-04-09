@@ -1,19 +1,24 @@
+import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from pathlib import Path
 from pandapower import from_excel
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
 
 # =========================
 # SETTINGS
 # =========================
-NET_XLSX = r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx"
+NET_XLSX = str(config.NET_PP_XLSX)
 
 # Pandapower trafo results (from pp timeseries export)
-PP_TRAFO_CSV = r"C:\Users\anton\Desktop\nando_pp\results\res_trafo\loading_percent.csv"
+PP_TRAFO_CSV = str(config.RESULTS_RES_TRAFO / "loading_percent.csv")
 
-# OpenDSS trafo results (the xlsx you created earlier)
-DSS_XLSX = r"C:\Users\anton\Desktop\nando_pp\excels\trafos_dss.xlsx"
-DSS_SHEET = "loading_percent"
+# OpenDSS trafo results
+DSS_XLSX  = str(config.DSS_TRAFO_LOADING_XLSX)
+DSS_SHEET = config.DSS_TRAFO_LOADING_SHEET
 
 # Trafo name from net.trafo["name"]
 TRAFO_NAME = "mv_f0_lv_O_NEILL_20"   # <-- ΒΑΛΕ ΕΔΩ

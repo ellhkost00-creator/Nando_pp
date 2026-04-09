@@ -12,6 +12,13 @@ PROJECT_ROOT = Path(__file__).parent.resolve()
 # ─── NETWORK SELECTION ────────────────────────────────────────────────────────
 # Options: "1"=Rural_SMR8  "2"=Rural_KLO14  "3"=Urban_HPK11  "4"=Urban_CRE21
 NETWORK_OPTION = "1"
+NET_DIR_NAMES = {
+    "1": "net_1_Rural_SMR8",
+    "2": "net_2_Rural_KLO14",
+    "3": "net_3_Urban_HPK11",
+    "4": "net_4_Urban_CRE21",
+}
+_NET_SUBDIR = NET_DIR_NAMES[NETWORK_OPTION]
 SELECTED_DAY   = 15    # 0 = random (seeded), 1..365 = fixed day of year
 SEED           = 100
 TIME_RES_MIN   = 30    # minutes per timestep (48 steps = 1 day at 30-min resolution)
@@ -20,8 +27,9 @@ TIME_RES_MIN   = 30    # minutes per timestep (48 steps = 1 day at 30-min resolu
 EXCELS_DIR   = PROJECT_ROOT / "excels"
 DSS_DIR      = PROJECT_ROOT / "dss_files"
 PROFILES_DIR = PROJECT_ROOT / "profiles"   # legacy; generated profiles go to DSS_DIR/profiles
-RESULTS_DIR  = PROJECT_ROOT / "results"
-METRICS_DIR  = PROJECT_ROOT / "metrics"
+RESULTS_DIR  = PROJECT_ROOT / "results" / _NET_SUBDIR
+METRICS_DIR  = PROJECT_ROOT / "metrics"             # script source folder
+METRICS_OUT_DIR = PROJECT_ROOT / "metrics" / _NET_SUBDIR  # per-network output
 
 # ─── NETWORK EXCEL INPUT FILES ────────────────────────────────────────────────
 NETWORK_XLSX_MAP = {
@@ -68,11 +76,18 @@ RESULTS_RES_LOAD    = RESULTS_DIR / "res_load"
 # ─── METRICS / VALIDATION ─────────────────────────────────────────────────────
 # DSS reference results (produced by nando_runs, compared in metrics/)
 DSS_VM_PU_XLSX    = EXCELS_DIR / "vm_pu_1ph_equivalent.xlsx"
+DSS_VM_PU_SHEET   = "vm_pu"
 DSS_VDATA_CLEAN   = EXCELS_DIR / "Vdata_all_buses_clean.csv"   # raw Volts, col=bus.phase
-METRIC_PER_BUS    = METRICS_DIR / "metric_per_bus.csv"
-METRIC_GLOBAL_TXT = METRICS_DIR / "metric_global.txt"
-METRIC_3PH_PER_BUS    = METRICS_DIR / "metric_3ph_per_bus.csv"
-METRIC_3PH_GLOBAL_TXT = METRICS_DIR / "metric_3ph_global.txt"
+# DSS balanced (1-phase equivalent) line loading reference
+DSS_LINE_LOADING_CSV    = EXCELS_DIR / "all_lines_loading_percent.csv"
+DSS_MV_LINE_LOADING_XLSX  = EXCELS_DIR / "mv_line_loading.xlsx"
+DSS_MV_LINE_LOADING_SHEET = "loading_pct"
+
+PLOTS_DIR = PROJECT_ROOT / "plots"
+METRIC_PER_BUS    = METRICS_OUT_DIR / "metric_per_bus.csv"
+METRIC_GLOBAL_TXT = METRICS_OUT_DIR / "metric_global.txt"
+METRIC_3PH_PER_BUS    = METRICS_OUT_DIR / "metric_3ph_per_bus.csv"
+METRIC_3PH_GLOBAL_TXT = METRICS_OUT_DIR / "metric_3ph_global.txt"
 
 # DSS 3ph reference loading (produced by nando_1_timeseries_3ph_loading.py)
 DSS_LINE_LOADING_A  = EXCELS_DIR / "dss_line_loading_a_percent.csv"

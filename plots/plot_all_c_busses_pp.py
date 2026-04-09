@@ -1,11 +1,16 @@
+import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from pathlib import Path
 from pandapower import from_excel
 
-net = from_excel(r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx")
-vm_path = r"C:\Users\anton\Desktop\nando_pp\results\res_bus\vm_pu.csv"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
+
+net = from_excel(str(config.NET_PP_XLSX))
+vm_path = str(config.RESULTS_RES_BUS / "vm_pu.csv")
 
 # -----------------------
 # 1) Πάρε customer bus indices από το net

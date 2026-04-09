@@ -1,13 +1,18 @@
+import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from pathlib import Path
 from pandapower import from_excel
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
 
 # =========================
 # CONFIG
 # =========================
-NET_XLSX =r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx"
-LOADING_CSV = r"C:\Users\anton\Desktop\nando_pp\results\res_line\loading_percent.csv"
+NET_XLSX    = str(config.NET_PP_XLSX)
+LOADING_CSV = str(config.RESULTS_RES_LINE / "loading_percent.csv")
 
 TIME_RES_HOURS = 0.5   # 30 min
 MV_KV = 22.0           # MV voltage level

@@ -50,9 +50,9 @@ DSS_TRAFO = {
 }
 
 # ─── Output files ────────────────────────────────────────────────────────────
-OUT_LINE_CSV  = config.METRICS_DIR / "metric_3ph_line_loading_per_element.csv"
-OUT_TRAFO_CSV = config.METRICS_DIR / "metric_3ph_trafo_loading_per_element.csv"
-OUT_GLOBAL    = config.METRICS_DIR / "metric_3ph_loading_global.txt"
+OUT_LINE_CSV  = config.METRICS_OUT_DIR / "metric_3ph_line_loading_per_element.csv"
+OUT_TRAFO_CSV = config.METRICS_OUT_DIR / "metric_3ph_trafo_loading_per_element.csv"
+OUT_GLOBAL    = config.METRICS_OUT_DIR / "metric_3ph_loading_global.txt"
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -209,7 +209,7 @@ def main():
     trafo_df = _compare_element(pp_trafo, dss_trafo, trafo_idx_to_name_filtered)
 
     # ── 4) Αποθήκευση per-element CSVs ─────────────────────────────────────
-    config.METRICS_DIR.mkdir(parents=True, exist_ok=True)
+    config.METRICS_OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     if not line_df.empty:
         line_df.to_csv(OUT_LINE_CSV, index=False)

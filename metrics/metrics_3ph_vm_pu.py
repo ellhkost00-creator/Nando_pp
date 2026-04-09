@@ -159,7 +159,7 @@ def main():
     out_csv = str(config.METRIC_3PH_PER_BUS)
     out_txt = str(config.METRIC_3PH_GLOBAL_TXT)
 
-    config.METRICS_DIR.mkdir(parents=True, exist_ok=True)
+    config.METRICS_OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     per_bus.to_csv(out_csv, index=False)
 

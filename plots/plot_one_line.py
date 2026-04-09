@@ -1,18 +1,23 @@
 import os
 import re
+import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from pathlib import Path
 from pandapower import from_excel
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
 
 # =========================
 # SETTINGS
 # =========================
-NET_XLSX = r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx"
-PP_LINE_CSV = r"C:\Users\anton\Desktop\nando_pp\results\res_line\loading_percent.csv"
-DSS_CSV = r"C:\Users\anton\Desktop\nando_pp\excels\all_lines_loading_percent.csv"
-OUT_DIR = r"C:\Users\anton\Desktop\nando_pp\plots\selected_lines_loading"
+NET_XLSX    = str(config.NET_PP_XLSX)
+PP_LINE_CSV = str(config.RESULTS_RES_LINE / "loading_percent.csv")
+DSS_CSV     = str(config.DSS_LINE_LOADING_CSV)
+OUT_DIR     = str(config.PLOTS_DIR / "selected_lines_loading")
 
 # Γραμμές που θες να γίνουν plot
 TARGET_LINES = [
