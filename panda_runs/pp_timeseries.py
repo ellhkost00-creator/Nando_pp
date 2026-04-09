@@ -1,8 +1,13 @@
 import pandapower as pp
+import sys
 from pandapower import from_excel, to_excel
 from pandapower.plotting import pf_res_plotly
+from pathlib import Path
 
-net=from_excel(r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
+
+net = from_excel(str(config.NET_PP_XLSX))
 
 import pandapower as pp
 from pandapower import from_excel
@@ -424,9 +429,9 @@ def run_ts(net, npts=48, out_dir="ts_results"):
     ow.log_variable("shunt", "in_service")
     run_timeseries(net, time_steps=range(npts))
 # --- paths ---
-base_dir=r"C:\Users\anton\Desktop\nando_pp\profiles"
-loadshapes_path =  r"C:\Users\anton\Desktop\nando_pp\profiles\09_LoadShapes.dss"
-loads_path      = r"C:\Users\anton\Desktop\nando_pp\profiles\10_Loads.dss"
+base_dir        = str(config.LOADSHAPES_BASE_DIR)
+loadshapes_path = str(config.LOADSHAPES_DSS)
+loads_path      = str(config.LOADS_DSS)
 '''
 net.line.loc[net.line.std_type == "lc_247-3ph", "max_i_ka"] = 0.60  # ή 0.30
 net.std_types["line"]["lc_248-3ph"]["max_i_ka"] = 0.60
@@ -469,7 +474,6 @@ from pandapower.plotting import simple_plotly
 
 print(net.controller)
 # --- run timeseries ---
-run_ts(net, npts=48, out_dir=r"C:\Users\anton\Desktop\nando_pp\results")
+run_ts(net, npts=48, out_dir=str(config.RESULTS_DIR))
 print(net.trafo.loc[[11,14], ["tap_pos","tap_min","tap_max"]])
-
 

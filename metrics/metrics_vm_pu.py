@@ -1,148 +1,156 @@
+import sys
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from pandapower import from_excel
 
-# =========================
-# PATHS
-# =========================
-NET_XLSX   = r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx"
-PP_VM_CSV  = r"C:\Users\anton\Desktop\nando_pp\results\res_bus\vm_pu.csv"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
 
-DSS_XLSX   = r"C:\Users\anton\Desktop\nando_pp\excels\vm_pu_1ph_equivalent.xlsx"
+# =========================
+# PATHS  (from config.py)
+# =========================
+NET_XLSX   = str(config.NET_PP_XLSX)
+PP_VM_CSV  = str(config.RESULTS_RES_BUS / "vm_pu.csv")
+
+DSS_XLSX   = str(config.DSS_VM_PU_XLSX)
 DSS_SHEET  = "vm_pu"
 
 SEP = ";"   # separator του PP csv
 
-# =========================
-# 1) Load net + read PP vm_pu (columns = bus index)
-# =========================
-net = from_excel(NET_XLSX)
-net.bus["name"] = net.bus["name"].astype(str)
 
-pp = pd.read_csv(PP_VM_CSV, sep=SEP, engine="python", encoding="latin1")
-if "time_step" in pp.columns:
-    pp = pp.set_index("time_step")
-else:
-    pp = pp.set_index(pp.columns[0])
+def main():
+    # =========================
+    # 1) Load net + read PP vm_pu (columns = bus index)
+    # =========================
+    net = from_excel(NET_XLSX)
+    net.bus["name"] = net.bus["name"].astype(str)
 
-pp.index = pd.to_numeric(pp.index.astype(str).str.strip(), errors="coerce")
-pp.columns = pp.columns.astype(str).str.strip()
-pp = pp.apply(pd.to_numeric, errors="coerce")
-pp = pp.loc[~pp.index.isna()].sort_index()
+    pp = pd.read_csv(PP_VM_CSV, sep=SEP, engine="python", encoding="latin1")
+    if "time_step" in pp.columns:
+        pp = pp.set_index("time_step")
+    else:
+        pp = pp.set_index(pp.columns[0])
 
-# =========================
-# 2) Read DSS excel (columns = bus name)
-# =========================
-dss = pd.read_excel(DSS_XLSX, sheet_name=DSS_SHEET, engine="openpyxl")
+    pp.index = pd.to_numeric(pp.index.astype(str).str.strip(), errors="coerce")
+    pp.columns = pp.columns.astype(str).str.strip()
+    pp = pp.apply(pd.to_numeric, errors="coerce")
+    pp = pp.loc[~pp.index.isna()].sort_index()
 
-# index
-if "timestep" in dss.columns:
-    dss = dss.set_index("timestep")
-else:
-    dss = dss.set_index(dss.columns[0])
+    # =========================
+    # 2) Read DSS excel (columns = bus name)
+    # =========================
+    dss = pd.read_excel(DSS_XLSX, sheet_name=DSS_SHEET, engine="openpyxl")
 
-dss.index = pd.to_numeric(dss.index.astype(str).str.strip(), errors="coerce")
-dss.columns = dss.columns.astype(str).str.strip()
-dss = dss.apply(pd.to_numeric, errors="coerce")
-dss = dss.loc[~dss.index.isna()].sort_index()
+    if "timestep" in dss.columns:
+        dss = dss.set_index("timestep")
+    else:
+        dss = dss.set_index(dss.columns[0])
 
-# =========================
-# 3) Find common timesteps (μόνο εδώ θέλουμε να ταιριάζει)
-# =========================
-common_idx = pp.index.intersection(dss.index)
-if len(common_idx) == 0:
-    print("PP index head:", pp.index[:10].tolist())
-    print("DSS index head:", dss.index[:10].tolist())
-    raise ValueError("Δεν υπάρχουν κοινά timesteps μεταξύ PP και DSS.")
+    dss.index = pd.to_numeric(dss.index.astype(str).str.strip(), errors="coerce")
+    dss.columns = dss.columns.astype(str).str.strip()
+    dss = dss.apply(pd.to_numeric, errors="coerce")
+    dss = dss.loc[~dss.index.isna()].sort_index()
 
-pp  = pp.loc[common_idx]
-dss = dss.loc[common_idx]
+    # =========================
+    # 3) Find common timesteps
+    # =========================
+    common_idx = pp.index.intersection(dss.index)
+    if len(common_idx) == 0:
+        print("PP index head:", pp.index[:10].tolist())
+        print("DSS index head:", dss.index[:10].tolist())
+        raise ValueError("Δεν υπάρχουν κοινά timesteps μεταξύ PP και DSS.")
 
-# =========================
-# 4) Build mapping: DSS bus name -> PP column (bus index as string)
-# =========================
-# DSS columns = bus names που υπάρχουν στο excel
-dss_bus_names = set(dss.columns)
+    pp  = pp.loc[common_idx]
+    dss = dss.loc[common_idx]
 
-# net.bus index -> name
-# κρατάμε μόνο αυτά που έχουν όνομα που υπάρχει στο DSS
-name_to_idx = {}
-for idx, name in net.bus["name"].items():
-    if name in dss_bus_names:
-        name_to_idx[name] = idx
+    # =========================
+    # 4) Build mapping: DSS bus name -> PP column (bus index as string)
+    # =========================
+    dss_bus_names = set(dss.columns)
 
-matched_names = sorted(name_to_idx.keys())
+    name_to_idx = {}
+    for idx, name in net.bus["name"].items():
+        if name in dss_bus_names:
+            name_to_idx[name] = idx
 
-if len(matched_names) == 0:
-    print("DSS cols sample:", list(dss.columns[:20]))
-    print("net.bus['name'] sample:", net.bus["name"].head(20).tolist())
-    raise ValueError("Δεν βρέθηκε κανένα κοινό bus name μεταξύ net και DSS excel.")
+    matched_names = sorted(name_to_idx.keys())
 
-# =========================
-# 5) Compute per-bus metrics
-# =========================
-eps = 1e-9
-rows = []
-all_abs = []
-all_sgn = []
+    if len(matched_names) == 0:
+        print("DSS cols sample:", list(dss.columns[:20]))
+        print("net.bus['name'] sample:", net.bus["name"].head(20).tolist())
+        raise ValueError("Δεν βρέθηκε κανένα κοινό bus name μεταξύ net και DSS excel.")
 
-for name in matched_names:
-    idx = name_to_idx[name]
-    pp_col = str(idx)  # PP column should be bus index as string
+    # =========================
+    # 5) Compute per-bus metrics
+    # =========================
+    eps = 1e-9
+    rows = []
+    all_abs = []
+    all_sgn = []
 
-    if pp_col not in pp.columns:
-        # αν δεν υπάρχει στο PP, skip
-        continue
+    for name in matched_names:
+        idx = name_to_idx[name]
+        pp_col = str(idx)
 
-    s_pp  = pp[pp_col]
-    s_dss = dss[name]
+        if pp_col not in pp.columns:
+            continue
 
-    # align + remove NaNs pairwise
-    tmp = pd.concat([s_pp, s_dss], axis=1, keys=["pp", "dss"]).dropna()
-    if tmp.empty:
-        continue
+        s_pp  = pp[pp_col]
+        s_dss = dss[name]
 
-    pct = 100.0 * (tmp["pp"] - tmp["dss"]) / (tmp["dss"].abs() + eps)
-    apct = pct.abs()
+        tmp = pd.concat([s_pp, s_dss], axis=1, keys=["pp", "dss"]).dropna()
+        if tmp.empty:
+            continue
 
-    rows.append({
-        "bus_name": name,
-        "pp_bus_idx": idx,
-        "N": int(len(tmp)),
-        "MAPE_%": float(apct.mean()),
-        "Max_%": float(apct.max()),
-        "MeanSigned_%": float(pct.mean()),
-    })
+        pct = 100.0 * (tmp["pp"] - tmp["dss"]) / (tmp["dss"].abs() + eps)
+        apct = pct.abs()
 
-    all_abs.append(apct.to_numpy())
-    all_sgn.append(pct.to_numpy())
+        rows.append({
+            "bus_name": name,
+            "pp_bus_idx": idx,
+            "N": int(len(tmp)),
+            "MAPE_%": float(apct.mean()),
+            "Max_%": float(apct.max()),
+            "MeanSigned_%": float(pct.mean()),
+        })
 
-per_bus = pd.DataFrame(rows)
+        all_abs.append(apct.to_numpy())
+        all_sgn.append(pct.to_numpy())
 
-if per_bus.empty:
-    raise ValueError("Μετά το mapping δεν βγήκε κανένα bus με διαθέσιμα δεδομένα και στα δύο.")
+    per_bus = pd.DataFrame(rows)
 
-per_bus = per_bus.sort_values("MAPE_%", ascending=False)
+    if per_bus.empty:
+        raise ValueError("Μετά το mapping δεν βγήκε κανένα bus με διαθέσιμα δεδομένα και στα δύο.")
 
-# global
-all_abs = np.concatenate(all_abs) if len(all_abs) else np.array([])
-all_sgn = np.concatenate(all_sgn) if len(all_sgn) else np.array([])
+    per_bus = per_bus.sort_values("MAPE_%", ascending=False)
 
-global_mape = float(np.mean(all_abs)) if all_abs.size else np.nan
-global_max  = float(np.max(all_abs))  if all_abs.size else np.nan
-global_bias = float(np.mean(all_sgn)) if all_sgn.size else np.nan
+    all_abs = np.concatenate(all_abs) if len(all_abs) else np.array([])
+    all_sgn = np.concatenate(all_sgn) if len(all_sgn) else np.array([])
 
-# =========================
-# 6) Save
-# =========================
-per_bus.to_csv(r"C:\Users\anton\Desktop\nando_pp\metrics\metric_per_bus.csv", index=False)
+    global_mape = float(np.mean(all_abs)) if all_abs.size else np.nan
+    global_max  = float(np.max(all_abs))  if all_abs.size else np.nan
+    global_bias = float(np.mean(all_sgn)) if all_sgn.size else np.nan
 
-with open(r"C:\Users\anton\Desktop\nando_pp\metrics\metric_global.txt", "w", encoding="utf-8") as f:
-    f.write(f"Matched buses: {int(per_bus.shape[0])}\n")
-    f.write(f"Total points: {int(all_abs.size)}\n")
-    f.write(f"Global MAPE %: {global_mape:.6f}\n")
-    f.write(f"Global Max  %: {global_max:.6f}\n")
-    f.write(f"Global Bias %: {global_bias:.6f}\n")
+    # =========================
+    # 6) Save
+    # =========================
+    per_bus.to_csv(str(config.METRIC_PER_BUS), index=False)
+
+    with open(str(config.METRIC_GLOBAL_TXT), "w", encoding="utf-8") as f:
+        f.write(f"Matched buses: {int(per_bus.shape[0])}\n")
+        f.write(f"Total points: {int(all_abs.size)}\n")
+        f.write(f"Global MAPE %: {global_mape:.6f}\n")
+        f.write(f"Global Max  %: {global_max:.6f}\n")
+        f.write(f"Global Bias %: {global_bias:.6f}\n")
+
+    print(f"Global MAPE: {global_mape:.4f}%  |  Max: {global_max:.4f}%  |  Bias: {global_bias:.4f}%")
+    print(f"Saved: {config.METRIC_PER_BUS}")
+    print(f"Saved: {config.METRIC_GLOBAL_TXT}")
+
+
+if __name__ == "__main__":
+    main()
 
 print("Saved: metric_per_bus.csv, metric_global.txt")
 print("\n=== GLOBAL ===")

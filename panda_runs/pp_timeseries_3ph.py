@@ -1,10 +1,12 @@
 import os
 import re
+import sys
 
 import numpy as np
 import pandas as pd
 import pandapower as pp
 
+from pathlib import Path
 from pandapower import from_excel
 from pandapower.control import ConstControl, DiscreteTapControl
 from pandapower.control.basic_controller import Controller
@@ -12,8 +14,10 @@ from pandapower.timeseries import OutputWriter, run_timeseries
 from pandapower.timeseries.data_sources.frame_data import DFData
 from pandapower.pf.runpp_3ph import runpp_3ph
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
 
-net = from_excel(r"C:\Users\anton\Desktop\nando_pp\excels\net_pp_3ph_ready.xlsx")
+net = from_excel(str(config.NET_3PH_XLSX))
 
 
 def parse_loadshapes_dss(loadshapes_path, base_dir):
@@ -462,7 +466,9 @@ import os
 import pandas as pd
 from tqdm import tqdm
 
-def run_ts_3ph_manual(net, npts=48, out_dir=r"C:\Users\anton\Desktop\nando_pp\results"):
+def run_ts_3ph_manual(net, npts=48, out_dir=None):
+    if out_dir is None:
+        out_dir = str(config.RESULTS_DIR)
     os.makedirs(out_dir, exist_ok=True)
     os.makedirs(os.path.join(out_dir, "res_bus_3ph"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "res_line_3ph"), exist_ok=True)
@@ -500,6 +506,18 @@ def run_ts_3ph_manual(net, npts=48, out_dir=r"C:\Users\anton\Desktop\nando_pp\re
             bus_vm_b[t] = net.res_bus_3ph["vm_b_pu"].copy()
             bus_vm_c[t] = net.res_bus_3ph["vm_c_pu"].copy()
 
+        # -------- lines --------
+        if hasattr(net, "res_line_3ph") and not net.res_line_3ph.empty:
+            line_loading_a[t] = net.res_line_3ph["loading_a_percent"].copy()
+            line_loading_b[t] = net.res_line_3ph["loading_b_percent"].copy()
+            line_loading_c[t] = net.res_line_3ph["loading_c_percent"].copy()
+
+        # -------- trafos --------
+        if hasattr(net, "res_trafo_3ph") and not net.res_trafo_3ph.empty:
+            trafo_loading_a[t] = net.res_trafo_3ph["loading_a_percent"].copy()
+            trafo_loading_b[t] = net.res_trafo_3ph["loading_b_percent"].copy()
+            trafo_loading_c[t] = net.res_trafo_3ph["loading_c_percent"].copy()
+
     # -------- save helper --------
     def save_ts_dict(ts_dict, filepath):
         if not ts_dict:
@@ -514,13 +532,20 @@ def run_ts_3ph_manual(net, npts=48, out_dir=r"C:\Users\anton\Desktop\nando_pp\re
     save_ts_dict(bus_vm_b, os.path.join(out_dir, "res_bus_3ph", "vm_b_pu.csv"))
     save_ts_dict(bus_vm_c, os.path.join(out_dir, "res_bus_3ph", "vm_c_pu.csv"))
 
+    save_ts_dict(line_loading_a, os.path.join(out_dir, "res_line_3ph", "loading_a_percent.csv"))
+    save_ts_dict(line_loading_b, os.path.join(out_dir, "res_line_3ph", "loading_b_percent.csv"))
+    save_ts_dict(line_loading_c, os.path.join(out_dir, "res_line_3ph", "loading_c_percent.csv"))
+
+    save_ts_dict(trafo_loading_a, os.path.join(out_dir, "res_trafo_3ph", "loading_a_percent.csv"))
+    save_ts_dict(trafo_loading_b, os.path.join(out_dir, "res_trafo_3ph", "loading_b_percent.csv"))
+    save_ts_dict(trafo_loading_c, os.path.join(out_dir, "res_trafo_3ph", "loading_c_percent.csv"))
 
     print("[OK] 3ph timeseries completed.")
 
 # --- paths ---
-base_dir = r"C:\Users\anton\Desktop\nando_pp\profiles"
-loadshapes_path = r"C:\Users\anton\Desktop\nando_pp\profiles\09_LoadShapes.dss"
-loads_path = r"C:\Users\anton\Desktop\nando_pp\profiles\10_Loads.dss"
+base_dir        = str(config.LOADSHAPES_BASE_DIR)
+loadshapes_path = str(config.LOADSHAPES_DSS)
+loads_path      = str(config.LOADS_DSS)
 
 # --- parse shapes ---
 shapes = parse_loadshapes_dss(loadshapes_path, base_dir)
@@ -572,5 +597,5 @@ print(net.controller)
 run_ts_3ph_manual(
    net,
     npts=48,
-    out_dir=r"C:\Users\anton\Desktop\nando_pp\results"
+    out_dir=str(config.RESULTS_DIR)
 )

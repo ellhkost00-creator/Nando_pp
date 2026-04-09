@@ -1,9 +1,14 @@
 import re
+import sys
 import numpy as np
 import pandapower as pp
 import csv
+from pathlib import Path
 
-BUSCOORDS_PATH = r"C:\Users\anton\Desktop\nando_pp\dss_files\BusCoords.csv"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
+
+BUSCOORDS_PATH = str(config.BUSCOORDS_CSV)
 
 def load_buscoords(path):
     coords = {}
@@ -52,7 +57,7 @@ pp.create_ext_grid(net, bus=b_source, vm_pu=1.04, name="Grid_66kV")
 # =========================
 # 3) LineCodes -> std_types["line"]
 # =========================
-LINECODES_PATH = r"C:\Users\anton\Desktop\nando_pp\dss_files\03_LineCodes.dss"
+LINECODES_PATH = str(config.LINECODES_DSS)
 
 UNIT_TO_KM = {
     "km": 1.0,
@@ -143,7 +148,7 @@ with open(LINECODES_PATH, "r", encoding="utf-8", errors="ignore") as f:
 import re
 import pandapower as pp
 
-MV_LINES_PATH =  r"C:\Users\anton\Desktop\nando_pp\dss_files\04_MV_Lines.dss"
+MV_LINES_PATH =  str(config.MV_LINES_DSS)
 
 UNIT_TO_KM = {
     "km": 1.0,
@@ -456,7 +461,7 @@ def create_iso_transformers_from_dss(
             created += 1
 
     return created, skipped
-REGULATORS_DSS_PATH=  r"C:\Users\anton\Desktop\nando_pp\dss_files\06_Regulators.dss"
+REGULATORS_DSS_PATH = str(config.REGS_DSS)
 created_iso, skipped_iso = create_iso_transformers_from_dss(
     net=net,
     dss_path=REGULATORS_DSS_PATH,   # π.χ. "regulators.dss"
@@ -808,7 +813,7 @@ created, skipped, ctrls = build_mv_regulators_from_dss_one_per_set(
     create_controllers=True
 )
 
-MV_CAPACITORS_PATH=  r"C:\Users\anton\Desktop\nando_pp\dss_files\05_Capacitors.dss"
+MV_CAPACITORS_PATH = str(config.CAPS_DSS)
 
 def create_mv_capacitors_from_dss(net, dss_path: str, get_or_create_mv_bus):
     created = 0
@@ -910,6 +915,8 @@ bad_idx, sw_idx = replace_short_lines_with_switches(
     length_threshold_km=0.001
 )
 from pandapower import to_excel
-to_excel(net,  r"C:\Users\anton\Desktop\nando_pp\dss_files\mv_net.xlsx")  # relative path
+
+if __name__ == "__main__":
+    to_excel(net, str(config.MV_NET_XLSX))
 
 

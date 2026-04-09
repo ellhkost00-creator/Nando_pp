@@ -1,25 +1,26 @@
 import os
+import sys
 import glob
 import numpy as np
 import pandas as pd
 from itertools import permutations
 from datetime import datetime, timedelta
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
 
 # =========================
-# CONFIG
+# CONFIG  (values come from config.py – edit that file to change settings)
 # =========================
-NETWORK_OPTION = "1"          # "1","2","3","4"
-EXPORT_DIR = "opendss_export" # output folder
-PROFILES_DIR = "profiles"     # inside EXPORT_DIR
-TIME_RES_MIN = 30             # 30-min resolution
-SEED = 100
-
-# selected_day: 0 => random (seeded), else 1..365
-SELECTED_DAY = 15
-
-# input profile files (same folder as script)
-RES_PROFILE_NPY = "Res_load_data_30min_res.npy"
-COM_PROFILE_NPY = "Com_load_data_30min_res.npy"
+NETWORK_OPTION = config.NETWORK_OPTION
+EXPORT_DIR     = str(config.DSS_DIR)   # generated .dss files go to dss_files/
+PROFILES_DIR   = "profiles"            # sub-folder inside EXPORT_DIR for CSVs
+TIME_RES_MIN   = config.TIME_RES_MIN
+SEED           = config.SEED
+SELECTED_DAY   = config.SELECTED_DAY
+RES_PROFILE_NPY = config.RES_PROFILE_NPY.name
+COM_PROFILE_NPY = config.COM_PROFILE_NPY.name
 
 # required networks
 REQUIRED_XLSX = {
@@ -40,7 +41,7 @@ class MissingExcelSheetsError(Exception):
     pass
 
 def check_data():
-    cwd = r"C:\Users\anton\Desktop\nando_pp\excels"
+    cwd = str(config.EXCELS_DIR)
 
     networks = [n for n in os.listdir(cwd) if n.lower().endswith(".xlsx")]
     if set(networks) != REQUIRED_XLSX:
@@ -63,7 +64,7 @@ def identify_network_xlsx(user_input: str) -> str:
     if str(user_input).upper() not in options:
         raise WrongNetworkNameError("Options are 1,2,3,4")
 
-    cwd = r"C:\Users\anton\Desktop\nando_pp\excels"
+    cwd = str(config.EXCELS_DIR)
     prefix = net_names[options.index(str(user_input))]  # e.g. Network_1
     pattern = f"{cwd}/{prefix}_*.xlsx"
     matched = glob.glob(pattern)
@@ -103,7 +104,7 @@ def char_to_num_map():
 # =========================
 class NetworkData:
     def __init__(self, xlsx_path: str):
-        self.xlsx_path = r"C:\Users\anton\Desktop\nando_pp\excels\Network_1_Rural_SMR8.xlsx"
+        self.xlsx_path = xlsx_path  # use the provided path (bug fix)
         self.data = {}
         self._load_all_sheets()
 
@@ -410,8 +411,8 @@ class DSSExporter:
         np.random.seed(seed)
 
         # Load profile arrays
-        house_data = np.load(os.path.join(r"C:\Users\anton\Desktop\nando_pp\excels", RES_PROFILE_NPY))
-        com_data = np.load(os.path.join(r"C:\Users\anton\Desktop\nando_pp\excels", COM_PROFILE_NPY))
+        house_data = np.load(str(config.RES_PROFILE_NPY))
+        com_data   = np.load(str(config.COM_PROFILE_NPY))
 
         npts = int((24 * 60) / TIME_RES_MIN)
 
@@ -479,9 +480,9 @@ class DSSExporter:
 if __name__ == "__main__":
     #check_data()
 
-    xlsx = identify_network_xlsx(NETWORK_OPTION)
-    print(f"Using network file: {xlsx}")
-    EXPORT_DIR=r"C:\Users\anton\Desktop\nando_pp\dss_files"
-    nd = NetworkData(xlsx)
+    xlsx_name = identify_network_xlsx(NETWORK_OPTION)
+    xlsx_path = str(config.EXCELS_DIR / xlsx_name)
+    print(f"Using network file: {xlsx_path}")
+    nd = NetworkData(xlsx_path)
     exporter = DSSExporter(nd.data, EXPORT_DIR)
     exporter.export_all(selected_day=SELECTED_DAY, seed=SEED)

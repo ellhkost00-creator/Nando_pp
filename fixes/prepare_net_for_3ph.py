@@ -1,4 +1,5 @@
 
+import sys
 import math
 import re
 from pathlib import Path
@@ -6,19 +7,21 @@ from pathlib import Path
 import pandapower as pp
 from pandapower.pf.runpp_3ph import runpp_3ph
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
 
 # =========================
-# PATHS
+# PATHS  (from config.py)
 # =========================
-BASE = Path(r"C:\Users\anton\Desktop\nando_pp\dss_files")
-NET_XLSX =r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx"
+BASE          = config.DSS_DIR
+NET_XLSX      = str(config.NET_PP_XLSX)
 
-CIRCUIT_DSS   = BASE / "01_Circuit.dss"
-LINECODES_DSS = BASE / "03_LineCodes.dss"
-LOADS_DSS     = BASE / "10_Loads.dss"
+CIRCUIT_DSS   = config.CIRCUIT_DSS
+LINECODES_DSS = config.LINECODES_DSS
+LOADS_DSS     = config.LOADS_DSS
 
-OUT_XLSX = BASE / "net_pp_3ph_ready.xlsx"
-OUT_JSON = BASE / "net_pp_3ph_ready.json"
+OUT_XLSX = config.NET_3PH_XLSX
+OUT_JSON = config.NET_3PH_JSON
 
 # =========================
 # HELPERS
@@ -191,39 +194,58 @@ def fill_trafo_zero_sequence_assumptions(net):
 
     supported = {"YNyn", "Dyn", "Yzn"}
 
+    # Read split_phase flag if it was set during LV build (windings=3 center-tap trafos)
+    has_split_phase_col = "split_phase" in net.trafo.columns
+
     for tidx, row in net.trafo.iterrows():
         hv = float(row["vn_hv_kv"])
         lv = float(row["vn_lv_kv"])
+        is_split = bool(row["split_phase"]) if has_split_phase_col else False
 
         # 66/22 source trafo
         if abs(hv - 66.0) < 1e-6 and abs(lv - 22.0) < 1e-6:
-            vector_group = "YNyn"
-            si0_hv_partial = 0.9
+            vector_group    = "YNyn"
+            si0_hv_partial  = 0.9
+            mag0_percent    = 100.0
 
         # 22/22 ISO / regulator equivalents collapsed to 2-winding trafos
-        elif abs(hv - 22.0) < 1e-6 and abs(lv - 22.0) < 1e-6:
-            vector_group = "Dyn"
-            si0_hv_partial = 0.9
+        elif abs(hv - 22.0) < 1.0 and abs(lv - 22.0) < 1.0:
+            vector_group    = "Dyn"
+            si0_hv_partial  = 0.9
+            mag0_percent    = 100.0
 
-        # 22/0.4 distribution trafos
-        elif abs(hv - 22.0) < 1e-6 and abs(lv - 0.4) < 1e-3:
+        # 22 kV / LV distribution trafos  (covers 0.4, 0.416, 0.433 kV variants)
+        elif abs(hv - 22.0) < 1.0 and lv < 1.0:
             vector_group = "Dyn"
-            si0_hv_partial = 0.9
+            if is_split:
+                # Split-phase center-tap: DSS windings=3, secondary center-tap is
+                # directly and solidly grounded.  Zero-sequence current returns
+                # through the LV neutral wire to the grounded center-tap, NOT
+                # through the transformer magnetising branch.
+                # → mag0_percent = 0 : zero-seq path is the solid neutral wire,
+                #                       not the transformer core.
+                # → si0_hv_partial = 0 : zero-seq stays entirely on LV side
+                #                        (delta primary blocks it from HV system).
+                si0_hv_partial = 0.0
+                mag0_percent   = 0.0
+            else:
+                # Standard 3-phase Dyn or single-phase Wye-Wye (SWER) trafo.
+                # Zero-seq circulates within the transformer (delta or wye core).
+                si0_hv_partial = 0.9
+                mag0_percent   = 100.0
 
         # fallback: keep only supported groups
         else:
             current_vg = row.get("vector_group", None)
-            if isinstance(current_vg, str) and current_vg in supported:
-                vector_group = current_vg
-            else:
-                vector_group = "Dyn"
+            vector_group = current_vg if (isinstance(current_vg, str) and current_vg in supported) else "Dyn"
             si0_hv_partial = 0.9
+            mag0_percent   = 100.0
 
-        net.trafo.at[tidx, "vector_group"] = vector_group
-        net.trafo.at[tidx, "vk0_percent"] = float(row["vk_percent"])
-        net.trafo.at[tidx, "vkr0_percent"] = float(row["vkr_percent"])
-        net.trafo.at[tidx, "mag0_percent"] = 100.0
-        net.trafo.at[tidx, "mag0_rx"] = 0.0
+        net.trafo.at[tidx, "vector_group"]   = vector_group
+        net.trafo.at[tidx, "vk0_percent"]    = float(row["vk_percent"])
+        net.trafo.at[tidx, "vkr0_percent"]   = float(row["vkr_percent"])
+        net.trafo.at[tidx, "mag0_percent"]   = mag0_percent
+        net.trafo.at[tidx, "mag0_rx"]        = 0.0
         net.trafo.at[tidx, "si0_hv_partial"] = si0_hv_partial
 
     bad = net.trafo.loc[~net.trafo["vector_group"].isin(supported), ["name", "vn_hv_kv", "vn_lv_kv", "vector_group"]]

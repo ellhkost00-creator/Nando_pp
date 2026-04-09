@@ -1,16 +1,21 @@
 import re
+import sys
 import math
 import pandas as pd
 import pandapower as pp
 from pandapower import from_json
 from pandapower.plotting import pf_res_plotly, simple_plotly
+from pathlib import Path
 
-# ========= PATHS =========
-BASE = r"C:\Users\anton\Desktop\nando_pp\dss_files"
-MV_JSON = rf"{BASE}\mv_net.xlsx"
-LV_TX_DSS = rf"{BASE}\07_LV_Tx.dss"
-LV_LINES_DSS = rf"{BASE}\08_LV_Lines.dss"
-# =========================
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
+
+# ========= PATHS (from config.py) =========
+BASE         = str(config.DSS_DIR)
+MV_JSON      = str(config.MV_NET_XLSX)
+LV_TX_DSS    = str(config.LV_TX_DSS)
+LV_LINES_DSS = str(config.LV_LINES_DSS)
+# ==========================================
 
 F_HZ = 50.0  # (δεν το χρειαζόμαστε πλέον για linecodes, αλλά το κρατάμε γενικά)
 
@@ -184,15 +189,15 @@ def kv_get_float(kv: dict, *keys: str, default: float = 0.0) -> float:
     return float(default)
 def add_mv_lv_transformer_from_dss_line(net, line: str):
     """
-    Force ALL LV distribution transformers to be:
-    - 2-winding (ignore DSS 'windings')
-    - LV side fixed at 0.4 kV
+    Map ALL LV distribution transformers to 2-winding pandapower trafos:
+    - Ignores DSS 'windings' count (3-winding split-phase -> 2-winding)
+    - LV kV derived from DSS kvs[1] via _infer_lv_kv_for_pp:
+        phases=3: use LL directly (e.g. 0.433 kV)
+        phases=1: LN -> LL (e.g. 0.24*sqrt(3)=0.416 kV, 0.25*sqrt(3)=0.433 kV)
     - Off-load tap: 5 positions, neutral=3, step=2.5%, tap_pos from DSS 'tap'
-
-    Fixes:
-    - vkr_percent from %loadloss (or r% if available)
+    - vkr_percent from %loadloss
     - pfe_kw from %noloadloss
-    - i0_percent from %imag (fallback to default)
+    - i0_percent from %imag (fallback 2.0 %)
     """
     line = line.strip()
     if not line.lower().startswith("new transformer."):
@@ -207,6 +212,9 @@ def add_mv_lv_transformer_from_dss_line(net, line: str):
 
     # --- Parse fields we need ---
     phases = int(kv.get("phases", "3"))
+
+    windings = int(kv.get("windings", "2"))
+    split_phase = (windings == 3)  # center-tap (split-phase): third winding is neutral leg
 
     buses = _parse_dss_array(kv.get("buses", ""))
     if len(buses) < 2:
@@ -239,7 +247,8 @@ def add_mv_lv_transformer_from_dss_line(net, line: str):
     tap_val = kv.get("tap", "1.0")
 
     MV_VN_KV = 22.0
-    LV_VN_KV = 0.4
+    # Derive LV voltage from DSS: for phases=1 (LN values), convert to LL equivalent
+    lv_kv_pp = _infer_lv_kv_for_pp(phases, kvs[1])
 
     # --- Buses ---
     hv_bus_name = _clean_bus_name(buses[0])
@@ -248,8 +257,8 @@ def add_mv_lv_transformer_from_dss_line(net, line: str):
     b_hv = ensure_bus(net, hv_bus_name, vn_kv=MV_VN_KV)
     net.bus.at[b_hv, "vn_kv"] = MV_VN_KV
 
-    b_lv = ensure_bus(net, lv_bus_name, vn_kv=LV_VN_KV)
-    net.bus.at[b_lv, "vn_kv"] = LV_VN_KV
+    b_lv = ensure_bus(net, lv_bus_name, vn_kv=lv_kv_pp)
+    net.bus.at[b_lv, "vn_kv"] = lv_kv_pp
 
     sn_mva = float(kvas[0]) / 1000.0
 
@@ -287,11 +296,11 @@ def add_mv_lv_transformer_from_dss_line(net, line: str):
         lv_bus=b_lv,
         sn_mva=sn_mva,
         vn_hv_kv=MV_VN_KV,
-        vn_lv_kv=LV_VN_KV,
+        vn_lv_kv=lv_kv_pp,
         vk_percent=xhl,
         vkr_percent=vkr_percent,
         pfe_kw=pfe_kw,
-        i0_percent=0.1,
+        i0_percent=i0_percent,
         shift_degree=shift,
         name=name
     )
@@ -304,6 +313,10 @@ def add_mv_lv_transformer_from_dss_line(net, line: str):
     net.trafo.at[tidx, "tap_step_percent"] = 2.5
     net.trafo.at[tidx, "tap_pos"] = _tap_to_pos_5steps(tap_val, neutral=3, step_pu=0.025)
     net.trafo.at[tidx, "tap_phase_shifter"] = False
+    # Mark center-tap (split-phase) trafos: DSS windings=3 has a neutral leg
+    # that acts as an explicit solid ground (center tap). Used in prepare_net_for_3ph.py
+    # to set correct zero-sequence parameters.
+    net.trafo.at[tidx, "split_phase"] = split_phase
 
 
 
@@ -427,7 +440,7 @@ def main():
     tx_created = add_all_lv_transformers(net, LV_TX_DSS)
     lines_created = add_all_lv_lines(net, LV_LINES_DSS)
     propagate_lv_busbar_coords_from_hv(net)
-    to_excel(net, r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx")
+    to_excel(net, str(config.NET_PP_XLSX))
 
 if __name__ == "__main__":
     net = main()
