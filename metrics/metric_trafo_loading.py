@@ -1,18 +1,23 @@
+import sys
 import pandas as pd
 import numpy as np
 import re
+from pathlib import Path
 from pandapower import from_excel
 
-# =========================
-# PATHS / SETTINGS
-# =========================
-NET_XLSX = r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx"
-PP_TRAFO_CSV = r"C:\Users\anton\Desktop\nando_pp\results\res_trafo\loading_percent.csv"
-DSS_XLSX = r"C:\Users\anton\Desktop\nando_pp\excels\trafos_dss.xlsx"
-DSS_SHEET = "loading_percent"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
 
-OUT_XLSX = r"C:\Users\anton\Desktop\nando_pp\metrics\trafo_loading_compare.xlsx"
-DEBUG_XLSX = r"C:\Users\anton\Desktop\nando_pp\results\trafo_loading_debug.xlsx"
+# =========================
+# PATHS / SETTINGS  (from config.py)
+# =========================
+NET_XLSX     = str(config.NET_PP_XLSX)
+PP_TRAFO_CSV = str(config.RESULTS_RES_TRAFO / "loading_percent.csv")
+DSS_XLSX     = str(config.DSS_TRAFO_LOADING_XLSX)
+DSS_SHEET    = config.DSS_TRAFO_LOADING_SHEET
+
+OUT_XLSX   = str(config.METRICS_DIR / "trafo_loading_compare.xlsx")
+DEBUG_XLSX = str(config.RESULTS_DIR  / "trafo_loading_debug.xlsx")
 
 SEP = ";"
 
