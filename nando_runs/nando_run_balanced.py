@@ -559,38 +559,70 @@ def run_daily(driver: DSSDriver):
 
 
 def export_all_line_loading_csv(
-    driver: DSSDriver,
-    Idata: pd.DataFrame,
     out_csv: str,
+    npts: int = 48,
     stepsize_minutes: int = 30,
 ) -> pd.DataFrame:
     """
-    Compute line loading [%] for ALL OpenDSS lines (MV + LV) and save to CSV.
+    Compute line loading [%] for ALL OpenDSS lines (MV + LV) by compiling
+    Master.dss directly and running a balanced daily solve.
 
-    Ampacity is read directly from each OpenDSS line element's normamps property.
+    Uses max(phase_A, phase_B, phase_C) current as the 1-phase equivalent –
+    in a balanced system all phases are equal; in a lightly unbalanced system
+    the max is the conservative value.
     """
-    ampacity_dict = {}
-    for line_name in driver.dss_circuit.Lines.AllNames:
-        driver.dss_circuit.Lines.Name = line_name
+    _dss = dss_direct.DSS
+    _dss.Start(0)
+    _text    = _dss.Text
+    _circuit = _dss.ActiveCircuit
+    _sol     = _circuit.Solution
+
+    master = str(config.DSS_DIR / "Master.dss")
+    _text.Command = f'Compile "{master}"'
+    _text.Command = f"Set Mode=daily number=1 stepsize={stepsize_minutes}m"
+    _text.Command = "Set time=(0,0)"
+
+    all_lines = list(_circuit.Lines.AllNames)
+    print(f"[INFO] Master.dss: {len(all_lines)} lines (MV + LV)")
+
+    # --- normamps and phase count per line ---
+    line_info = {}
+    for ln in all_lines:
+        _circuit.Lines.Name = ln
         try:
-            ampacity_dict[line_name] = float(
-                driver.dss_circuit.ActiveElement.Properties("normamps").Val
-            )
+            amp = float(_circuit.ActiveElement.Properties("normamps").Val)
         except Exception:
-            ampacity_dict[line_name] = np.nan
+            amp = np.nan
+        try:
+            nph = int(_circuit.Lines.Phases)
+        except Exception:
+            nph = 3
+        line_info[ln] = {"normamps": amp, "nphases": nph}
 
-    idata_cols = pd.Index([str(c) for c in Idata.columns])
-    ampacity_aligned = pd.Series(ampacity_dict).reindex(idata_cols)
+    # --- timeseries loop ---
+    loading_rows = []
+    for _ in tqdm(range(npts), desc="DSS balanced all-lines loading"):
+        _sol.Solve()
+        row = {}
+        for ln in all_lines:
+            _circuit.Lines.Name = ln
+            info = line_info[ln]
+            amp  = info["normamps"]
+            nph  = info["nphases"]
+            if np.isnan(amp) or amp <= 0:
+                row[ln] = np.nan
+                continue
+            mags = _circuit.ActiveElement.CurrentsMagAng
+            # mags = [mag0, ang0, mag1, ang1, ...] for sending-end conductors
+            # Only take the first nphases conductors (skip neutral)
+            phase_mags = [mags[2 * k] for k in range(min(nph, len(mags) // 2))]
+            row[ln] = max(phase_mags) / amp * 100.0 if phase_mags else np.nan
+        loading_rows.append(row)
 
-    missing = ampacity_aligned[ampacity_aligned.isna()].index.tolist()
-    if missing:
-        print(f"[WARN] Missing ampacity for {len(missing)} lines.")
+    loading_pct = pd.DataFrame(loading_rows)
+    loading_pct.index.name = "time_step"
 
-    loading_pct = Idata.copy()
-    loading_pct.columns = idata_cols
-    loading_pct = loading_pct.divide(ampacity_aligned, axis=1) * 100.0
-
-    time_index = pd.date_range("2021-01-01 00:00", periods=len(loading_pct), freq=f"{stepsize_minutes}min")
+    time_index = pd.date_range("2021-01-01 00:00", periods=npts, freq=f"{stepsize_minutes}min")
     loading_pct.insert(0, "time", time_index)
 
     loading_pct.to_csv(out_csv, index=False)
@@ -654,9 +686,8 @@ if __name__ == "__main__":
     # ── 5. OUTPUT 2: All lines loading [%] ────────────────────────────────────
     out_lines = str(config.EXCELS_DIR / "all_lines_loading_percent.csv")
     loading_pct = export_all_line_loading_csv(
-        driver=driver,
-        Idata=Idata,
         out_csv=out_lines,
+        npts=48,
         stepsize_minutes=config.TIME_RES_MIN,
     )
     print(f"[OK] Saved all lines loading → all_lines_loading_percent.csv  shape={loading_pct.shape}")
