@@ -1,19 +1,21 @@
+import sys
 import os
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from pandapower import from_excel
 
-# =========================
-# PATHS
-# =========================
-NET_XLSX  = r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx"
-PP_VM_CSV = r"C:\Users\anton\Desktop\nando_pp\results\res_bus\vm_pu.csv"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
 
-# ΝΕΟ OpenDSS csv (mean per bus, vm_pu)
-DSS_VM_CSV = r"C:\Users\anton\Desktop\nando_pp\excels\Vmean_vm_pu_with_source.csv"
+# =========================
+# PATHS  (from config.py)
+# =========================
+NET_XLSX   = str(config.NET_PP_XLSX)
+PP_VM_CSV  = str(config.RESULTS_RES_BUS / "vm_pu.csv")
+DSS_VM_CSV = str(config.DSS_VM_MEAN_PU_CSV)
 
-OUT_DIR = r"C:\Users\anton\Desktop\nando_pp\metrics"
-os.makedirs(OUT_DIR, exist_ok=True)
+config.METRICS_OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 SEP = ";"   # separator του PP csv
 EPS = 1e-9
@@ -149,8 +151,8 @@ total_points = int(all_abs.size)
 # =========================
 # 8) Save outputs
 # =========================
-per_bus_csv = os.path.join(OUT_DIR, "metric_per_bus.csv")
-global_txt  = os.path.join(OUT_DIR, "metric_global.txt")
+per_bus_csv = str(config.METRIC_PER_BUS)
+global_txt  = str(config.METRIC_GLOBAL_TXT)
 
 per_bus.to_csv(per_bus_csv, index=False)
 

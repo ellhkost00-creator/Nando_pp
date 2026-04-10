@@ -1,22 +1,22 @@
+import sys
 import pandas as pd
 import numpy as np
 import re
+from pathlib import Path
 from pandapower import from_excel
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import config
+
 # =========================
-# PATHS / SETTINGS
+# PATHS / SETTINGS  (from config.py)
 # =========================
-NET_XLSX = r"C:\Users\anton\Desktop\nando_pp\excels\net_pp.xlsx"
+NET_XLSX    = str(config.NET_PP_XLSX)
+PP_LINE_CSV = str(config.RESULTS_RES_LINE / "loading_percent.csv")
+DSS_CSV     = str(config.DSS_LINE_LOADING_CSV)
+OUT_XLSX    = str(config.METRICS_OUT_DIR / "all_line_loading_metrics.xlsx")
 
-# Pandapower line results
-PP_LINE_CSV = r"C:\Users\anton\Desktop\nando_pp\results\res_line\loading_percent.csv"
-
-# OpenDSS ALL-lines loading csv
-DSS_CSV = r"C:\Users\anton\Desktop\nando_pp\excels\all_lines_loading_percent.csv"
-
-# Output: metrics only
-OUT_XLSX = r"C:\Users\anton\Desktop\nando_pp\metrics\all_line_loading_metrics.xlsx"
-
+config.METRICS_OUT_DIR.mkdir(parents=True, exist_ok=True)
 SEP = ";"
 
 

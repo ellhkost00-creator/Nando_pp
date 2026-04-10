@@ -80,6 +80,8 @@ DSS_VM_PU_SHEET   = "vm_pu"
 DSS_VDATA_CLEAN   = EXCELS_DIR / "Vdata_all_buses_clean.csv"   # raw Volts, col=bus.phase
 # DSS balanced (1-phase equivalent) line loading reference
 DSS_LINE_LOADING_CSV    = EXCELS_DIR / "all_lines_loading_percent.csv"
+# DSS balanced mean-per-bus vm_pu CSV (produced by nando_run_balanced.py)
+DSS_VM_MEAN_PU_CSV      = EXCELS_DIR / "Vmean_vm_pu_with_source.csv"
 DSS_MV_LINE_LOADING_XLSX  = EXCELS_DIR / "mv_line_loading.xlsx"
 DSS_MV_LINE_LOADING_SHEET = "loading_pct"
 

@@ -33,23 +33,16 @@ STEPS = [
     ("panda_runs/pp_timeseries.py",        "5a. Run balanced timeseries (pandapower)",   True),
     ("panda_runs/pp_timeseries_3ph.py",    "5b. Run 3-phase timeseries (pandapower)",   True),
     # ── OpenDSS reference simulations (nando_runs) ──────────────────────────
-    # Enable the ones you need for comparison.
-    # 3ph per-phase loading from DSS (standalone, no DSSDriver/Excel dependency)
-    ("nando_runs/nando_1_timeseries_3ph_loading.py",      "6. OpenDSS – 3ph line+trafo loading",  True),
-    # Legacy nando scripts (require NetworkData/DSSDriver + Excel files)
-    ("nando_runs/nando_1_timeseries_all_busses.py",       "6a. OpenDSS – all buses",             False),
-    ("nando_runs/nando_1_timeseries_all_busses_clean.py", "6b. OpenDSS – clean buses",           False),
-    ("nando_runs/nando_1_timeseries_all_busses_mean.py",  "6c. OpenDSS – mean per bus",          False),
-    ("nando_runs/nando_1_timeseries_all_busses_mean_pu.py","6d. OpenDSS – mean per bus (pu)",    False),
-    ("nando_runs/nando_1_timeseries_all_lines.py",        "6e. OpenDSS – all lines",             False),
-    ("nando_runs/nando_1_timeseries_trafos.py",           "6f. OpenDSS – trafos",                False),
+    # Balanced: all buses (clean + mean pu) + all lines loading
+    ("nando_runs/nando_run_balanced.py",   "6a. OpenDSS – balanced (buses + lines)",             True),
+    # Unbalanced (3-phase): per-phase line + trafo loading
+    ("nando_runs/nando_run_unbalanced.py", "6b. OpenDSS – unbalanced 3ph (lines + trafos)",      True),
     # ── Metrics (PP vs DSS) ───────────────────────────────────────────────
-    ("metrics/metrics_vm_pu.py",            "7a. Metrics – bus voltages (vm_pu, balanced)",       True),
+    ("metrics/metrics_all_busses.py",      "7a. Metrics – all buses (vm_pu, balanced)",          True),
     ("metrics/metrics_3ph_vm_pu.py",       "7b. Metrics – bus voltages (3-phase vs DSS)",        True),
     ("metrics/metrics_3ph_loading.py",     "7c. Metrics – line+trafo loading (3-phase vs DSS)",  True),
     ("metrics/metrics_all_lines.py",       "7d. Metrics – all lines loading",                    True),
-    ("metrics/metrics_all_busses.py",      "7e. Metrics – all buses",                            True),
-    ("metrics/metric_trafo_loading.py",    "7f. Metrics – trafo loading",                        True),
+    ("metrics/metric_trafo_loading.py",    "7e. Metrics – trafo loading",                        True),
 ]
 # ──────────────────────────────────────────────────────────────────────────────
 
