@@ -11,10 +11,11 @@ import config
 # =========================
 # PATHS / SETTINGS  (from config.py)
 # =========================
-NET_XLSX    = str(config.NET_PP_XLSX)
-PP_LINE_CSV = str(config.RESULTS_RES_LINE / "loading_percent.csv")
-DSS_CSV     = str(config.DSS_LINE_LOADING_CSV)
-OUT_XLSX    = str(config.METRICS_OUT_DIR / "all_line_loading_metrics.xlsx")
+NET_XLSX      = str(config.NET_PP_XLSX)
+PP_LINE_CSV   = str(config.RESULTS_RES_LINE / "loading_percent.csv")
+DSS_CSV       = str(config.DSS_LINE_LOADING_CSV)
+OUT_XLSX_MV   = str(config.METRICS_OUT_DIR / "mv_line_loading_metrics.xlsx")
+OUT_XLSX_LV   = str(config.METRICS_OUT_DIR / "lv_line_loading_metrics.xlsx")
 
 config.METRICS_OUT_DIR.mkdir(parents=True, exist_ok=True)
 SEP = ";"
@@ -111,7 +112,6 @@ for dss_col in dss.columns:
 # =========================
 # MATCH COMMON LINES + METRICS
 # =========================
-summary_cols = ["line_name", "pp_line_idx", "dss_col", "N", "MAE_pp", "Bias_pp", "MaxAbs_pp"]
 rows = []
 
 common_keys = sorted(set(pp_norm_map.keys()) & set(dss_norm_map.keys()))
@@ -146,36 +146,51 @@ for k in common_keys:
         "MAE_pp": float(np.mean(np.abs(diff_pp))),
         "Bias_pp": float(np.mean(diff_pp)),
         "MaxAbs_pp": float(np.max(np.abs(diff_pp))),
+        "is_lv": bool(re.search(r'_lv', line_name, re.IGNORECASE)),
     })
 
 
 # =========================
-# SUMMARY
+# SUMMARY – split MV / LV
 # =========================
-summary = pd.DataFrame(rows, columns=summary_cols)
+IS_LV = re.compile(r'_lv', re.IGNORECASE)
 
-if not summary.empty:
-    summary = summary.sort_values("MAE_pp", ascending=False).reset_index(drop=True)
+summary_cols = ["line_name", "pp_line_idx", "dss_col", "N", "MAE_pp", "Bias_pp", "MaxAbs_pp"]
 
+all_df = pd.DataFrame(rows)
+
+def build_summary(df):
+    if df.empty:
+        return pd.DataFrame(columns=summary_cols)
+    df = df[summary_cols].copy()
+    df = df.sort_values("MAE_pp", ascending=False).reset_index(drop=True)
     global_row = pd.DataFrame([{
         "line_name": "=== GLOBAL MEAN (all matched lines) ===",
         "pp_line_idx": "",
         "dss_col": "",
-        "N": int(summary["N"].sum()),
-        "MAE_pp": float(summary["MAE_pp"].mean()),
-        "Bias_pp": float(summary["Bias_pp"].mean()),
-        "MaxAbs_pp": float(summary["MaxAbs_pp"].max()),
+        "N": int(df["N"].sum()),
+        "MAE_pp": float(df["MAE_pp"].mean()),
+        "Bias_pp": float(df["Bias_pp"].mean()),
+        "MaxAbs_pp": float(df["MaxAbs_pp"].max()),
     }], columns=summary_cols)
+    return pd.concat([global_row, df], ignore_index=True)
 
-    summary = pd.concat([global_row, summary], ignore_index=True)
+mv_rows = all_df[~all_df["is_lv"]] if not all_df.empty else all_df
+lv_rows = all_df[all_df["is_lv"]]  if not all_df.empty else all_df
+
+summary_mv = build_summary(mv_rows)
+summary_lv = build_summary(lv_rows)
 
 
 # =========================
-# EXPORT METRICS ONLY
+# EXPORT – two files
 # =========================
-with pd.ExcelWriter(OUT_XLSX, engine="openpyxl") as writer:
-    summary.to_excel(writer, index=False, sheet_name="summary")
+with pd.ExcelWriter(OUT_XLSX_MV, engine="openpyxl") as writer:
+    summary_mv.to_excel(writer, index=False, sheet_name="summary")
+
+with pd.ExcelWriter(OUT_XLSX_LV, engine="openpyxl") as writer:
+    summary_lv.to_excel(writer, index=False, sheet_name="summary")
 
 print("DONE")
-print(f"Matched common lines: {len(rows)}")
-print(f"Saved metrics: {OUT_XLSX}")
+print(f"MV matched: {len(mv_rows)}  → {OUT_XLSX_MV}")
+print(f"LV matched: {len(lv_rows)}  → {OUT_XLSX_LV}")
