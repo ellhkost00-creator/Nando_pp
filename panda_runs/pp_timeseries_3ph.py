@@ -593,7 +593,7 @@ prof_caps = add_cap_time_schedule_by_name(
     include_23=False
 )
 
-print(net.controller)
+
 run_ts_3ph_manual(
    net,
     npts=48,

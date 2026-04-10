@@ -472,8 +472,8 @@ prof_caps = add_cap_time_schedule_by_name(
 )
 from pandapower.plotting import simple_plotly
 
-print(net.controller)
+
 # --- run timeseries ---
 run_ts(net, npts=48, out_dir=str(config.RESULTS_DIR))
-print(net.trafo.loc[[11,14], ["tap_pos","tap_min","tap_max"]])
+
 

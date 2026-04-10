@@ -218,16 +218,13 @@ def fill_trafo_zero_sequence_assumptions(net):
         elif abs(hv - 22.0) < 1.0 and lv < 1.0:
             vector_group = "Dyn"
             if is_split:
-                # Split-phase center-tap: DSS windings=3, secondary center-tap is
-                # directly and solidly grounded.  Zero-sequence current returns
-                # through the LV neutral wire to the grounded center-tap, NOT
-                # through the transformer magnetising branch.
-                # → mag0_percent = 0 : zero-seq path is the solid neutral wire,
-                #                       not the transformer core.
-                # → si0_hv_partial = 0 : zero-seq stays entirely on LV side
-                #                        (delta primary blocks it from HV system).
-                si0_hv_partial = 0.0
-                mag0_percent   = 0.0
+                # pandapower's runpp_3ph cannot correctly model split-phase
+                # center-tap trafos.  Using mag0=0 / si0=0 causes za=0 →
+                # singular admittance matrix → solver failure every timestep.
+                # Use standard Dyn assumptions so the solver stays numerically
+                # stable (results for these trafos are excluded from metrics anyway).
+                si0_hv_partial = 0.9
+                mag0_percent   = 100.0
             else:
                 # Standard 3-phase Dyn or single-phase Wye-Wye (SWER) trafo.
                 # Zero-seq circulates within the transformer (delta or wye core).
