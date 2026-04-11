@@ -478,12 +478,15 @@ def create_iso_transformers_from_dss(
 
     return created, skipped
 REGULATORS_DSS_PATH = str(config.REGS_DSS)
-created_iso, skipped_iso = create_iso_transformers_from_dss(
-    net=net,
-    dss_path=REGULATORS_DSS_PATH,   # π.χ. "regulators.dss"
-    get_or_create_mv_bus=get_or_create_mv_bus,
-    mv_vn_kv=22.0
-)
+if config.REGS_DSS.exists():
+    created_iso, skipped_iso = create_iso_transformers_from_dss(
+        net=net,
+        dss_path=REGULATORS_DSS_PATH,
+        get_or_create_mv_bus=get_or_create_mv_bus,
+        mv_vn_kv=22.0
+    )
+else:
+    created_iso, skipped_iso = 0, 0
 
 import re
 import math
@@ -831,14 +834,17 @@ def build_mv_regulators_from_dss_one_per_set(
                     pass
 
     return created, skipped, controllers
-created, skipped, ctrls = build_mv_regulators_from_dss_one_per_set(
-    net,
-    dss_path=REGULATORS_DSS_PATH,
-    get_or_create_mv_bus=get_or_create_mv_bus,
-    mv_vn_kv=22.0,
-    sn_mva_overrides=config.REG_SN_MVA_OVERRIDES,
-    create_controllers=True
-)
+if config.REGS_DSS.exists():
+    created, skipped, ctrls = build_mv_regulators_from_dss_one_per_set(
+        net,
+        dss_path=REGULATORS_DSS_PATH,
+        get_or_create_mv_bus=get_or_create_mv_bus,
+        mv_vn_kv=22.0,
+        sn_mva_overrides=config.REG_SN_MVA_OVERRIDES,
+        create_controllers=True
+    )
+else:
+    created, skipped, ctrls = 0, 0, 0
 
 MV_CAPACITORS_PATH = str(config.CAPS_DSS)
 
@@ -888,11 +894,14 @@ def create_mv_capacitors_from_dss(net, dss_path: str, get_or_create_mv_bus):
             created += 1
 
     return created, skipped
-created_caps, skipped_caps = create_mv_capacitors_from_dss(
-    net,
-    dss_path=MV_CAPACITORS_PATH,  # ή ό,τι αρχείο τα έχει
-    get_or_create_mv_bus=get_or_create_mv_bus
-)
+if config.CAPS_DSS.exists():
+    created_caps, skipped_caps = create_mv_capacitors_from_dss(
+        net,
+        dss_path=MV_CAPACITORS_PATH,
+        get_or_create_mv_bus=get_or_create_mv_bus
+    )
+else:
+    created_caps, skipped_caps = 0, 0
 
 def replace_short_lines_with_switches(
     net,

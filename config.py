@@ -11,7 +11,7 @@ PROJECT_ROOT = Path(__file__).parent.resolve()
 
 # ─── NETWORK SELECTION ────────────────────────────────────────────────────────
 # Options: "1"=Rural_SMR8  "2"=Rural_KLO14  "3"=Urban_HPK11  "4"=Urban_CRE21
-NETWORK_OPTION = "2"
+NETWORK_OPTION = "3"
 NET_DIR_NAMES = {
     "1": "net_1_Rural_SMR8",
     "2": "net_2_Rural_KLO14",
@@ -25,7 +25,7 @@ TIME_RES_MIN   = 30    # minutes per timestep (48 steps = 1 day at 30-min resolu
 
 # ─── DIRECTORIES ──────────────────────────────────────────────────────────────
 EXCELS_DIR   = PROJECT_ROOT / "excels"
-DSS_DIR      = PROJECT_ROOT / "dss_files"
+DSS_DIR      = PROJECT_ROOT / "dss_files" / _NET_SUBDIR   # per-network, avoids cross-contamination
 PROFILES_DIR = PROJECT_ROOT / "profiles"   # legacy; generated profiles go to DSS_DIR/profiles
 RESULTS_DIR  = PROJECT_ROOT / "results" / _NET_SUBDIR
 METRICS_DIR  = PROJECT_ROOT / "metrics"             # script source folder
