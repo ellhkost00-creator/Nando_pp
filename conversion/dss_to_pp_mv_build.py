@@ -44,9 +44,6 @@ net = pp.create_empty_network(name="from_opendss_manual")
 # =========================
 b_source = pp.create_bus(net, index=1, vn_kv=66.0, name="sourcebus")
 
-# geodata (σίγουρος τρόπος για όλες τις εκδόσεις)
-net.bus_geodata.loc[b_source, ["x", "y"]] = [3440.03085, 441.8237]
-
 
 # =========================
 # 2) External grid
@@ -262,8 +259,27 @@ with open(MV_LINES_PATH, "r", encoding="utf-8", errors="ignore") as f:
 
 from pandapower.plotting import simple_plotly
 
-hv_bus = bus_map["sourcebus"]      # ή 1 αν το κρατάς έτσι
-lv_bus = bus_map["mv_f0_n4169"]
+# --- Parse hv/lv bus από το 02_MV_NetTx.dss ---
+_mv_nettx_hv_bus = None
+_mv_nettx_lv_bus = None
+with open(str(config.MV_NETTX_DSS), "r", encoding="utf-8", errors="ignore") as _f:
+    for _raw in _f:
+        _m = re.match(
+            r'(?i)^new\s+transformer\.\S+\s+.*buses\s*=\s*\[([^,\]]+),\s*([^\]]+)\]', _raw.strip()
+        )
+        if _m:
+            _mv_nettx_hv_bus = _m.group(1).strip().lower()
+            _mv_nettx_lv_bus = _m.group(2).strip().lower()
+            break
+if _mv_nettx_hv_bus is None or _mv_nettx_lv_bus is None:
+    raise RuntimeError("Δεν βρέθηκε transformer στο 02_MV_NetTx.dss")
+hv_bus = bus_map[_mv_nettx_hv_bus]
+lv_bus = get_or_create_mv_bus(_mv_nettx_lv_bus)
+
+# source bus geodata: ίδια coords με τον lv_bus του transformer
+if _mv_nettx_lv_bus in coords:
+    _sx, _sy = coords[_mv_nettx_lv_bus]
+    net.bus_geodata.loc[b_source, ["x", "y"]] = [_sx, _sy]
 
 sn_mva = 100000 / 1000  # 100 MVA
 vn_hv_kv = 66.0

@@ -54,6 +54,7 @@ LV_LINES_DSS   = DSS_DIR / "08_LV_Lines.dss"
 LOADSHAPES_DSS = DSS_DIR / "09_LoadShapes.dss"
 LOADS_DSS      = DSS_DIR / "10_Loads.dss"
 BUSCOORDS_CSV  = DSS_DIR / "BusCoords.csv"
+MV_NETTX_DSS   = DSS_DIR / "02_MV_NetTx.dss"
 
 # base_dir used by parse_loadshapes_dss() to resolve relative CSV paths
 # (paths in 09_LoadShapes.dss look like "profiles/Load_shape_X.csv",
