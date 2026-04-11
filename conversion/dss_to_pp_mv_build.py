@@ -658,8 +658,7 @@ def build_mv_regulators_from_dss_one_per_set(
             # --- Transformer ---
             tname, trest = _parse_new_obj(line, "transformer")
             if tname:
-                if "regulator" in tname.lower():
-                    trafo_lines[tname] = line
+                trafo_lines[tname] = line  # collect all; filter by regctrl in 2nd pass
                 continue
 
             # --- Regcontrol ---
@@ -670,9 +669,14 @@ def build_mv_regulators_from_dss_one_per_set(
                     regctrl[cp["transformer"]] = cp
                 continue
 
+    # ---------------- Filter: keep only transformers referenced by a Regcontrol ----------------
+    reg_trafo_names = set(regctrl.keys())  # transformer names that have a Regcontrol
+    # also accept Regcontrols stored under their control name (already mapped via cp["transformer"])
+    reg_trafo_lines = {k: v for k, v in trafo_lines.items() if k in reg_trafo_names}
+
     # ---------------- Group by base regulator name ----------------
     groups = {}
-    for tname, tline in trafo_lines.items():
+    for tname, tline in reg_trafo_lines.items():
         base = _base_reg_name(tname)
         groups.setdefault(base, []).append((tname, tline))
 
@@ -815,17 +819,12 @@ def build_mv_regulators_from_dss_one_per_set(
                     pass
 
     return created, skipped, controllers
-sn_map = {
-    "NAGAMBIE_REGULATOR": 5.0,
-    "AVENEL_REGULATOR": 2.5,
-}
-
 created, skipped, ctrls = build_mv_regulators_from_dss_one_per_set(
     net,
     dss_path=REGULATORS_DSS_PATH,
     get_or_create_mv_bus=get_or_create_mv_bus,
     mv_vn_kv=22.0,
-    sn_mva_overrides=sn_map,
+    sn_mva_overrides=config.REG_SN_MVA_OVERRIDES,
     create_controllers=True
 )
 

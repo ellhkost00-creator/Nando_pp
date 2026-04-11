@@ -11,7 +11,7 @@ PROJECT_ROOT = Path(__file__).parent.resolve()
 
 # ─── NETWORK SELECTION ────────────────────────────────────────────────────────
 # Options: "1"=Rural_SMR8  "2"=Rural_KLO14  "3"=Urban_HPK11  "4"=Urban_CRE21
-NETWORK_OPTION = "1"
+NETWORK_OPTION = "2"
 NET_DIR_NAMES = {
     "1": "net_1_Rural_SMR8",
     "2": "net_2_Rural_KLO14",
@@ -55,6 +55,21 @@ LOADSHAPES_DSS = DSS_DIR / "09_LoadShapes.dss"
 LOADS_DSS      = DSS_DIR / "10_Loads.dss"
 BUSCOORDS_CSV  = DSS_DIR / "BusCoords.csv"
 MV_NETTX_DSS   = DSS_DIR / "02_MV_NetTx.dss"
+
+# ─── REGULATOR sn_mva OVERRIDES (per network) ────────────────────────────────
+# Keys = base regulator name (without _A/_B/_C suffix), values = sn_mva in MVA.
+# Used when DSS kVA is a per-phase stub value and the real rating is known.
+# Leave empty ({}) to rely entirely on the DSS kVA value.
+REG_SN_MVA_MAP = {
+    "1": {
+        "NAGAMBIE_REGULATOR": 5.0,
+        "AVENEL_REGULATOR":   2.5,
+    },
+    "2": {},
+    "3": {},
+    "4": {},
+}
+REG_SN_MVA_OVERRIDES = REG_SN_MVA_MAP.get(NETWORK_OPTION, {})
 
 # base_dir used by parse_loadshapes_dss() to resolve relative CSV paths
 # (paths in 09_LoadShapes.dss look like "profiles/Load_shape_X.csv",
