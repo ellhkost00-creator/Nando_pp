@@ -721,7 +721,55 @@ if __name__ == "__main__":
     df_vm_pu.to_csv(out_pu)
     print(f"[OK] Saved mean vm_pu per bus → {out_pu.name}  shape={df_vm_pu.shape}")
 
+    # ── 7. OUTPUT 4: Trafo loading [%] ───────────────────────────────────────
+    # Build kVA map: DSS trafo name (lowercase) -> rated kVA from Excel lvtx sheet
+    lvtx_df = network_data["lvtx"].copy().reset_index(drop=True)
+    kva_map = {}
+    for _, row in lvtx_df.iterrows():
+        dss_name = f"mv_f0_lv_{row['Substation_ID']}".lower()
+        try:
+            kva_map[dss_name] = float(row["kvas_primary"])
+        except (ValueError, TypeError):
+            pass
+
+    S_lv_txs_out = Sdata_txs.copy()
+    S_lv_txs_out.index = range(len(S_lv_txs_out))
+    S_lv_txs_out.index.name = "timestamp"
+    S_lv_txs_out.columns = [str(c).lower() for c in S_lv_txs_out.columns]
+    S_lv_txs_out = S_lv_txs_out.apply(pd.to_numeric, errors="coerce")
+
+    loading_percent_tx = S_lv_txs_out.copy()
+    missing_tx = []
+    for tx in loading_percent_tx.columns:
+        cap = kva_map.get(tx, np.nan)
+        if np.isnan(cap) or cap <= 0:
+            loading_percent_tx[tx] = np.nan
+            missing_tx.append(tx)
+        else:
+            loading_percent_tx[tx] = 100.0 * loading_percent_tx[tx] / cap
+
+    summary_tx = pd.DataFrame(index=S_lv_txs_out.columns)
+    summary_tx.index.name = "trafo"
+    summary_tx["rated_kVA"]     = [kva_map.get(tx, np.nan) for tx in summary_tx.index]
+    summary_tx["max_loading_%"] = loading_percent_tx.max(axis=0, skipna=True)
+    summary_tx["mean_loading_%"]= loading_percent_tx.mean(axis=0, skipna=True)
+    summary_tx["hours_over_100%"] = (loading_percent_tx > 100).sum(axis=0) * (config.TIME_RES_MIN / 60.0)
+
+    missing_tx_df = pd.DataFrame({"missing_trafos_in_ratings": missing_tx})
+
+    out_trafo_xlsx = config.DSS_TRAFO_LOADING_XLSX
+    config.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    with pd.ExcelWriter(str(out_trafo_xlsx), engine="openpyxl") as writer:
+        S_lv_txs_out.to_excel(writer, sheet_name="S_lv_txs_kVA")
+        loading_percent_tx.to_excel(writer, sheet_name="loading_percent")
+        summary_tx.to_excel(writer, sheet_name="summary")
+        missing_tx_df.to_excel(writer, sheet_name="missing_in_ratings", index=False)
+    print(f"[OK] Saved trafo loading     → {out_trafo_xlsx.name}  shape={loading_percent_tx.shape}")
+    if missing_tx:
+        print(f"     WARNING: {len(missing_tx)} trafos δεν βρέθηκαν kVA. Δες sheet 'missing_in_ratings'.")
+
     print("\n\033[1;92m[DONE] Balanced timeseries complete.\033[0m")
     print(f"  Output 1 (all buses):       {out_buses}")
     print(f"  Output 2 (all lines):       {out_lines}")
     print(f"  Output 3 (mean vm_pu):      {out_pu}")
+    print(f"  Output 4 (trafo loading):   {out_trafo_xlsx}")

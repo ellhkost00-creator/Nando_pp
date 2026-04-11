@@ -1410,7 +1410,12 @@ V_loads, P_loads, Q_loads, S_mv_tx, S_lv_txs, Idata = run_daily(temp_dss_ckt2)
 # =========================
 # CONFIG: output path
 # =========================
-OUT_XLSX = r"C:\Users\anton\Desktop\nando_pp\excels\trafos_dss.xlsx"
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+import config as _config
+OUT_XLSX = str(_config.DSS_TRAFO_LOADING_XLSX)
+_config.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 # =========================
 # 1) Time index (optional but nice)

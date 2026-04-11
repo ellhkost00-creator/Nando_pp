@@ -6,87 +6,87 @@
 
   Phase A:
     Matched elements : 13254
-    MAE   (%)        : 2.990  (mean over elements)
-    RMSE  (%)        : 3.265
-    Max AE (%)       : 97.791
-    MBE   (%)        : -2.987  (+ = PP overestimates)
+    MAE   (%)        : 2.692  (mean over elements)
+    RMSE  (%)        : 3.396
+    Max AE (%)       : 172.145
+    MBE   (%)        : 1.477  (+ = PP overestimates)
 
   Phase B:
     Matched elements : 13254
-    MAE   (%)        : 3.297  (mean over elements)
-    RMSE  (%)        : 3.570
-    Max AE (%)       : 82.322
-    MBE   (%)        : -3.287  (+ = PP overestimates)
+    MAE   (%)        : 1.495  (mean over elements)
+    RMSE  (%)        : 1.766
+    Max AE (%)       : 70.856
+    MBE   (%)        : 0.039  (+ = PP overestimates)
 
   Phase C:
     Matched elements : 13254
-    MAE   (%)        : 3.453  (mean over elements)
-    RMSE  (%)        : 3.739
-    Max AE (%)       : 103.993
-    MBE   (%)        : -3.438  (+ = PP overestimates)
+    MAE   (%)        : 1.239  (mean over elements)
+    RMSE  (%)        : 1.350
+    Max AE (%)       : 85.300
+    MBE   (%)        : -0.996  (+ = PP overestimates)
 
   Top-5 worst (by max_ae) per phase:
     Phase A:
-      mv_f0_l2066                          mae= 63.23%  max_ae= 97.79%
-      mv_f0_l2135                          mae= 63.22%  max_ae= 97.77%
-      mv_f0_l2129                          mae= 63.22%  max_ae= 97.77%
-      mv_f0_l2511                          mae= 63.21%  max_ae= 97.76%
-      mv_f0_l2205                          mae= 63.21%  max_ae= 97.76%
+      mv_f0_lv293_f0_l0                    mae= 46.79%  max_ae=172.14%
+      mv_f0_lv293_f0_l1                    mae= 44.32%  max_ae=163.63%
+      mv_f0_lv293_f0_l2                    mae= 44.07%  max_ae=162.67%
+      mv_f0_lv293_f0_l3                    mae= 42.74%  max_ae=154.15%
+      mv_f0_lv179_f0_l0                    mae= 43.44%  max_ae=146.84%
     Phase B:
-      mv_f0_l2135                          mae= 56.71%  max_ae= 82.32%
-      mv_f0_l2129                          mae= 56.71%  max_ae= 82.32%
-      mv_f0_l2205                          mae= 56.70%  max_ae= 82.31%
-      mv_f0_l2511                          mae= 56.70%  max_ae= 82.31%
-      mv_f0_l2066                          mae= 56.68%  max_ae= 82.29%
+      mv_f0_l1725                          mae= 48.68%  max_ae= 70.86%
+      mv_f0_l2587                          mae= 46.41%  max_ae= 67.47%
+      mv_f0_l2590                          mae= 46.41%  max_ae= 67.47%
+      mv_f0_l2553                          mae= 46.41%  max_ae= 67.47%
+      mv_f0_l2503                          mae= 41.40%  max_ae= 58.67%
     Phase C:
-      mv_f0_l2193                          mae= 68.72%  max_ae=103.99%
-      mv_f0_l2422                          mae= 68.72%  max_ae=103.99%
-      mv_f0_l2205                          mae= 68.64%  max_ae=103.88%
-      mv_f0_l2511                          mae= 68.64%  max_ae=103.88%
-      mv_f0_l2135                          mae= 68.63%  max_ae=103.87%
+      mv_f0_l1725                          mae= 56.58%  max_ae= 85.30%
+      mv_f0_l2587                          mae= 53.91%  max_ae= 81.22%
+      mv_f0_l2590                          mae= 53.91%  max_ae= 81.22%
+      mv_f0_l2553                          mae= 53.91%  max_ae= 81.22%
+      mv_f0_l2503                          mae= 45.64%  max_ae= 66.77%
 
 ── TRAFOS ──
 
   Phase A:
     Matched elements : 137
-    MAE   (%)        : 1.941  (mean over elements)
-    RMSE  (%)        : 2.071
-    Max AE (%)       : 6.047
-    MBE   (%)        : 1.782  (+ = PP overestimates)
+    MAE   (%)        : 29.917  (mean over elements)
+    RMSE  (%)        : 34.342
+    Max AE (%)       : 1152.135
+    MBE   (%)        : 29.009  (+ = PP overestimates)
 
   Phase B:
     Matched elements : 137
-    MAE   (%)        : 2.760  (mean over elements)
-    RMSE  (%)        : 3.009
-    Max AE (%)       : 11.594
-    MBE   (%)        : 2.155  (+ = PP overestimates)
+    MAE   (%)        : 13.442  (mean over elements)
+    RMSE  (%)        : 15.385
+    Max AE (%)       : 590.009
+    MBE   (%)        : 12.255  (+ = PP overestimates)
 
   Phase C:
     Matched elements : 137
-    MAE   (%)        : 2.381  (mean over elements)
-    RMSE  (%)        : 2.624
-    Max AE (%)       : 7.753
-    MBE   (%)        : 2.157  (+ = PP overestimates)
+    MAE   (%)        : 18.689  (mean over elements)
+    RMSE  (%)        : 20.751
+    Max AE (%)       : 986.427
+    MBE   (%)        : 17.598  (+ = PP overestimates)
 
   Top-5 worst (by max_ae) per phase:
     Phase A:
-      mv_f0_lv_bells_eltes                 mae=  3.07%  max_ae=  6.05%
-      mv_f0_lv_durant_oakley               mae=  2.30%  max_ae=  3.81%
-      mv_f0_lv_goodman_fitzpatrick         mae=  0.69%  max_ae=  2.67%
-      mv_f0_lv_tuxworth_moxham             mae=  1.88%  max_ae=  2.62%
-      mv_f0_lv_donnybrook_n661             mae=  1.76%  max_ae=  2.10%
+      mv_f0_lv_wildwood_aqueduct           mae=573.82%  max_ae=1152.13%
+      mv_f0_lv_donnybrook_p106a            mae=393.46%  max_ae=858.00%
+      mv_f0_lv_wildwood_p9_wal-whit        mae=366.38%  max_ae=805.50%
+      mv_f0_lv_fourth_ave_32416            mae=208.03%  max_ae=489.27%
+      mv_f0_lv_eucalypt_station            mae=181.90%  max_ae=452.22%
     Phase B:
-      mv_f0_lv_goodman_fitzpatrick         mae=  6.97%  max_ae= 11.59%
-      mv_f0_lv_donnybrook_n661             mae=  3.11%  max_ae=  4.67%
-      mv_f0_lv_bells_eltes                 mae=  1.33%  max_ae=  3.85%
-      mv_f0_lv_durant_oakley               mae=  0.80%  max_ae=  2.90%
-      mv_f0_lv_tuxworth_moxham             mae=  1.60%  max_ae=  2.78%
+      mv_f0_lv_wildwood_aqueduct           mae=253.72%  max_ae=590.01%
+      mv_f0_lv_donnybrook_p106a            mae=220.37%  max_ae=514.47%
+      mv_f0_lv_wildwood_p9_wal-whit        mae=114.55%  max_ae=342.55%
+      mv_f0_lv_fourth_ave_32416            mae=131.98%  max_ae=236.76%
+      mv_f0_lv_donnybrk-langley_pk         mae=112.16%  max_ae=217.29%
     Phase C:
-      mv_f0_lv_bells_eltes                 mae=  4.87%  max_ae=  7.75%
-      mv_f0_lv_durant_oakley               mae=  3.69%  max_ae=  5.94%
-      mv_f0_lv_goodman_fitzpatrick         mae=  1.90%  max_ae=  3.98%
-      mv_f0_lv_tuxworth_moxham             mae=  0.77%  max_ae=  2.54%
-      mv_f0_lv_donnybrook_n661             mae=  0.67%  max_ae=  2.27%
+      mv_f0_lv_wildwood_aqueduct           mae=573.73%  max_ae=986.43%
+      mv_f0_lv_donnybrook_p106a            mae=487.70%  max_ae=836.37%
+      mv_f0_lv_wildwood_p9_wal-whit        mae=309.00%  max_ae=553.01%
+      mv_f0_lv_st_george_court             mae=191.69%  max_ae=328.19%
+      mv_f0_lv_glenburnie_forth            mae=140.28%  max_ae=276.51%
 
 ============================================================
 

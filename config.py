@@ -117,7 +117,7 @@ DSS_TRAFO_LOADING_C = EXCELS_DIR / "dss_trafo_loading_c_percent.csv"
 # 1-phase line-to-line trafos (HV connected between two phases, no neutral on HV)
 # pandapower's runpp_3ph cannot model these correctly → excluded from loading metrics
 # DSS balanced (1-phase equivalent) trafo loading reference
-DSS_TRAFO_LOADING_XLSX  = EXCELS_DIR / "trafos_dss.xlsx"
+DSS_TRAFO_LOADING_XLSX  = RESULTS_DIR / "trafos_dss.xlsx"
 DSS_TRAFO_LOADING_SHEET = "loading_percent"
 
 DSS_TRAFO_LL_NAMES    = EXCELS_DIR / "dss_trafo_line_to_line_names.csv"
