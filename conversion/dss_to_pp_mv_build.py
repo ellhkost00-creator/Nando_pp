@@ -629,11 +629,21 @@ def build_mv_regulators_from_dss_one_per_set(
     # transformer_name -> regcontrol params
     regctrl = {}
 
+    # regulator base name -> total 3-phase kVA (from '! regulator_kva=SID VALUE' comments)
+    reg_kva_total = {}
+
     # ---------------- Parse DSS file ----------------
     with open(dss_path, "r", encoding="utf-8", errors="ignore") as f:
         for raw in f:
             line = raw.strip()
-            if not line or line.startswith("!") or line.lower().startswith("rem"):
+            if not line or line.lower().startswith("rem"):
+                continue
+
+            # parse regulator_kva metadata comment
+            if line.startswith("!"):
+                kva_m = re.match(r'!\s*regulator_kva=(\S+)\s+([0-9.]+)', line)
+                if kva_m:
+                    reg_kva_total[kva_m.group(1).lower()] = float(kva_m.group(2))
                 continue
 
             # --- Reactors (jumpers) ---
@@ -725,13 +735,14 @@ def build_mv_regulators_from_dss_one_per_set(
             try: vkr_percent = float(tp["%loadloss"])
             except: pass
 
-        # sn_mva: override > DSS kva > fallback
-        # NOTE: regulator stub kVA values are already in MVA units in the DSS file
+        # sn_mva priority: manual override > DSS comment kva_total/1000 > stub kva/1000
         if base in sn_mva_overrides:
             sn_mva = float(sn_mva_overrides[base])
+        elif base.lower() in reg_kva_total:
+            sn_mva = reg_kva_total[base.lower()] / 1000.0
         else:
             kva = wdg.get(1, {}).get("kva") or wdg.get(2, {}).get("kva")
-            sn_mva = float(kva) if kva else 1.0
+            sn_mva = (float(kva) / 1000.0) if kva else 1.0
 
         tid = pp.create_transformer_from_parameters(
             net,

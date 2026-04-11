@@ -65,7 +65,7 @@ REG_SN_MVA_MAP = {
         "NAGAMBIE_REGULATOR": 5.0,
         "AVENEL_REGULATOR":   2.5,
     },
-    "2": {},
+    "2": {},  # read automatically from '! regulator_kva' comments in 06_Regulators.dss
     "3": {},
     "4": {},
 }

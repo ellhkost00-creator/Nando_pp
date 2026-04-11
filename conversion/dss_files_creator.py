@@ -320,6 +320,10 @@ class DSSExporter:
 
             # regulator case
             self.commands["06_Regulators.dss"].append("Set MaxControlIter=100")
+            # total 3-phase kVA for this regulator (used by mv_build to set sn_mva)
+            self.commands["06_Regulators.dss"].append(
+                f"! regulator_kva={row['Substation_ID']} {row['kvas_primary']}"
+            )
 
             # reactors jumpers
             sid = row["Substation_ID"]
